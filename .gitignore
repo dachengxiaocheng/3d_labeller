@@ -1,0 +1,9 @@
+#过滤文件
+CMakeCache.txt
+cmake_install.cmake
+*.o
+Makefile
+
+#过滤文件夹
+CMakeFiles/
+test_data/
