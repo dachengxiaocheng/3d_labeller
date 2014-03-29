@@ -37,7 +37,7 @@ typedef pcl::PointCloud<PointT> PointCloudT;
 pcl::visualization::PCLVisualizer viewer("3D Viewer");
 PointCloudT::Ptr cloud_ptr(new PointCloudT);
 PointCloudT::Ptr new_cloud_ptr (new PointCloudT);
-PointCloudT cloud_marked;
+std::vector<PointCloudT, Eigen::aligned_allocator<PointCloudT> > cloud_marked;
 std::string pressed_num;
 pcl::IndicesPtr selected(new std::vector<int>);
 std::string infile;
@@ -66,7 +66,7 @@ void checkOutPointCloud(PointCloudT &in, pcl::IndicesPtr &indices)
   ei.setInputCloud(in.makeShared());
   ei.setIndices(indices);
   ei.filter(tmp);
-  cloud_marked += tmp;
+  cloud_marked.push_back(tmp);
   ei.setNegative(true);
   ei.filter(tmp);
   *cloud_ptr = tmp;
@@ -95,8 +95,19 @@ void keyboardEventOccurred(const pcl::visualization::KeyboardEvent &event, void*
       pressed_num += word;
     else if (event.keyUp() && word == 'd')
       pressed_num.clear();
+    else if (event.keyUp() && word == 'b') {
+      *cloud_ptr += cloud_marked.back();
+      cloud_marked.pop_back();
+      viewer.removePointCloud("sample cloud");
+      *new_cloud_ptr = *cloud_ptr;
+      pcl::visualization::PointCloudColorHandlerRGBField<PointT> rgb(new_cloud_ptr);
+      viewer.addPointCloud<PointT> (new_cloud_ptr, rgb, "sample cloud");
+    }
     else if (event.keyUp() && word == 's') {
-      pcl::io::savePCDFile(outfile, cloud_marked);
+      PointCloudT tmp;
+      for(int i = 0;i < cloud_marked.size(); i++)
+        tmp += cloud_marked[i];
+      pcl::io::savePCDFile(outfile, tmp);
       std::cout << "point cloud has saved into " << outfile << "." << std::endl;
     }
   }
